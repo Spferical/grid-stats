@@ -3,6 +3,7 @@ from bottle import route, run
 from bs4 import BeautifulSoup
 import urllib.request
 import re
+import argparse
 
 @route('/')
 def index():
@@ -44,9 +45,23 @@ def parse_number(x):
     except TypeError:
         pass
 
+def update_database_with_curr_grid_status():
+    pass
+
 
 def main():
-    get_curr_grid_status()
+    parser = argparse.ArgumentParser(
+        description="Web application to graph stats of The Grid over time")
+    subparsers = parser.add_subparsers(dest="command")
+    server_parser = subparsers.add_parser(
+        "server", help="run web server")
+    update_database_parser = subparsers.add_parser(
+        "update-database", help="update the grid stats database")
+    args = vars(parser.parse_args())
+    if args["command"] == "server":
+        run_server()
+    elif args["command"] == "update-database":
+        update_database_with_curr_grid_status()
 
 def run_server():
     run(host='localhost', port=8082)
