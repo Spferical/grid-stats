@@ -5,6 +5,8 @@ import urllib.request
 import re
 import argparse
 
+NUM_COLUMNS_IN_GRID_TABLE = 22
+
 @route('/')
 def index():
     return '<strong>Hello world!</strong>'
@@ -28,7 +30,7 @@ def get_curr_grid_status():
                     data_row.append(num)
                 else:
                     data_row.append(val)
-        if len(data_row) == 22:
+        if len(data_row) == NUM_COLUMNS_IN_GRID_TABLE:
             data.append(data_row)
     return data
 
