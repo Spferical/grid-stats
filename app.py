@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from bottle import route, run
 from bs4 import BeautifulSoup
 import urllib.request
