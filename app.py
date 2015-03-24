@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import urllib.request
 import re
 import argparse
+import database
 
 NUM_COLUMNS_IN_GRID_TABLE = 22
 
@@ -75,15 +76,13 @@ def parse_player(row):
         'trait' : row[20],
         'activity' : row[21],
     }
+    return player
+
 
 def update_database():
     data = get_ranks_table()
     players = [parse_player(row) for row in data]
-
-
-def create_database():
-    import make_database
-    make_database.main()
+    database.add_data(players)
 
 
 def main():
@@ -102,10 +101,12 @@ def main():
     elif args["command"] == "update-database":
         update_database()
     elif args["command"] == "create-database":
-        create_database()
+        database.create_database()
+
 
 def run_server():
     run(host='localhost', port=8082)
+
 
 if __name__ == '__main__':
     main()
