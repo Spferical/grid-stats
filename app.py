@@ -36,6 +36,8 @@ def get_ranks_table():
 
 
 def parse_number(x):
+    if x == b'NA':
+        return 0
     try:
         # remove commas from numbers and try parsing as float
         x = float(re.sub(b"[^\d\.]", b"", x))
