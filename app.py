@@ -81,6 +81,11 @@ def update_database():
     players = [parse_player(row) for row in data]
 
 
+def create_database():
+    import make_database
+    make_database.main()
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Web application to graph stats of The Grid over time")
@@ -89,11 +94,15 @@ def main():
         "server", help="run web server")
     update_database_parser = subparsers.add_parser(
         "update-database", help="update the grid stats database")
+    create_database_parser = subparsers.add_parser(
+        "create-database", help="create the grid stats database")
     args = vars(parser.parse_args())
     if args["command"] == "server":
         run_server()
     elif args["command"] == "update-database":
         update_database()
+    elif args["command"] == "create-database":
+        create_database()
 
 def run_server():
     run(host='localhost', port=8082)
