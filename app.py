@@ -12,7 +12,7 @@ def index():
     return '<strong>Hello world!</strong>'
 
 
-def get_curr_grid_status():
+def get_ranks_table():
     page = urllib.request.urlopen("http://codeelf.com/games/the-grid-2/grid/ranks/")
     soup = BeautifulSoup(page)
     data = []
@@ -74,8 +74,8 @@ def parse_player(row):
         'activity' : row[21],
     }
 
-def update_database_with_curr_grid_status():
-    data = get_curr_grid_status()
+def update_database():
+    data = get_ranks_table()
     players = [parse_player(row) for row in data]
 
 
@@ -91,7 +91,7 @@ def main():
     if args["command"] == "server":
         run_server()
     elif args["command"] == "update-database":
-        update_database_with_curr_grid_status()
+        update_database()
 
 def run_server():
     run(host='localhost', port=8082)
