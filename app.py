@@ -47,8 +47,36 @@ def parse_number(x):
     except TypeError:
         pass
 
+
+def parse_player(row):
+    player = {
+        'rank' : row[0],
+        'name' : row[1],
+        'squares' : row[2],
+        'units' : row[3],
+        'clout' : row[4],
+        'gold' : row[5],
+        'silver' : row[6],
+        'farms' : row[7],
+        'cities' : row[8],
+        'rebels' : row[9],
+        'bank' : row[10],
+        'wizards' : row[11],
+        'energy' : row[12],
+        'perm' : row[13],
+        'wipes' : row[14],
+        'wiped' : row[15],
+        'IPC' : row[16],
+        'kills' : row[17],
+        'slain' : row[18],
+        'loan' : row[19],
+        'trait' : row[20],
+        'activity' : row[21],
+    }
+
 def update_database_with_curr_grid_status():
-    pass
+    data = get_curr_grid_status()
+    players = [parse_player(row) for row in data]
 
 
 def main():
