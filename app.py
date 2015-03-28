@@ -5,6 +5,7 @@ import urllib.request
 import re
 import argparse
 import database
+import matplotlib.pyplot as plt
 
 NUM_COLUMNS_IN_GRID_TABLE = 22
 
@@ -85,6 +86,31 @@ def update_database():
     database.add_data(players)
 
 
+def update_graphs():
+    session = database.Session()
+    users = session.query(database.User)
+    fig = plt.figure(figsize=(10, 7.5))
+    ax = fig.add_subplot(111)
+    min_time = max_time = None
+    for user in users:
+        data = session.query(database.UserLog).filter_by(user_id=user.id)
+        if min_time is None or data[0].time < min_time:
+            min_time = data[0].time
+        if max_time is None or data[-1].time > max_time:
+            max_time = data[-1].time
+        xvals = [log.time for log in data]
+        yvals = [log.units for log in data]
+        if max(yvals) != 0:
+            plt.plot(xvals, yvals, label=user.name)
+
+    ax.set_xlim(min_time, max_time)
+    plt.legend(ncol=2, loc=2)
+    plt.savefig('units.svg', )
+    fig.clf()
+
+    session.close()
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Web application to graph stats of The Grid over time")
@@ -100,6 +126,7 @@ def main():
         run_server()
     elif args["command"] == "update-database":
         update_database()
+        update_graphs()
     elif args["command"] == "create-database":
         database.create_database()
 
