@@ -91,25 +91,26 @@ def update_graphs():
     users = session.query(database.User)
     fig = plt.figure(figsize=(10, 7.5))
     ax = fig.add_subplot(111)
-    plt.title("Units")
-    plt.ylabel("units")
-    plt.xlabel("time")
-    min_time = max_time = None
-    for user in users:
-        data = session.query(database.UserLog).filter_by(user_id=user.id)
-        if min_time is None or data[0].time < min_time:
-            min_time = data[0].time
-        if max_time is None or data[-1].time > max_time:
-            max_time = data[-1].time
-        xvals = [log.time for log in data]
-        yvals = [log.units for log in data]
-        if max(yvals) != 0:
-            plt.plot(xvals, yvals, label=user.name)
+    for stat in ("units", "farms", "cities", "squares"):
+        plt.title(stat.capitalize())
+        plt.ylabel(stat.capitalize())
+        plt.xlabel("Time")
+        min_time = max_time = None
+        for user in users:
+            data = session.query(database.UserLog).filter_by(user_id=user.id)
+            if min_time is None or data[0].time < min_time:
+                min_time = data[0].time
+            if max_time is None or data[-1].time > max_time:
+                max_time = data[-1].time
+            xvals = [log.time for log in data]
+            yvals = [log.__getattribute__(stat) for log in data]
+            if max(yvals) != 0:
+                plt.plot(xvals, yvals, label=user.name)
 
-    ax.set_xlim(min_time, max_time)
-    plt.legend(ncol=2, loc=2)
-    plt.savefig('units.svg', )
-    fig.clf()
+        ax.set_xlim(min_time, max_time)
+        plt.legend(ncol=2, loc=2)
+        plt.savefig('%s.svg' % stat)
+        fig.clf()
 
     session.close()
 
