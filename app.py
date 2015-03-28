@@ -91,6 +91,9 @@ def update_graphs():
     users = session.query(database.User)
     fig = plt.figure(figsize=(10, 7.5))
     ax = fig.add_subplot(111)
+    plt.title("Units")
+    plt.ylabel("units")
+    plt.xlabel("time")
     min_time = max_time = None
     for user in users:
         data = session.query(database.UserLog).filter_by(user_id=user.id)
