@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-from bottle import route, run
+from bottle import route, run, static_file
 from bs4 import BeautifulSoup
 import urllib.request
 import re
+import os
 import argparse
 import database
 import matplotlib.pyplot as plt
@@ -11,10 +12,16 @@ import matplotlib.cm as cmx
 
 NUM_COLUMNS_IN_GRID_TABLE = 22
 
+stats = ("units", "farms", "cities", "squares")
+
 @route('/')
 def index():
-    return '<strong>Hello world!</strong>'
+    return ''.join(
+        "<img src=\"%s.svg\"/>" % stat for stat in stats)
 
+@route('/:image.svg')
+def get_image(image):
+    return static_file("%s.svg" % image, os.getcwd())
 
 def get_ranks_table():
     page = urllib.request.urlopen("http://codeelf.com/games/the-grid-2/grid/ranks/")
@@ -107,7 +114,7 @@ def update_graphs():
 
     users = active_users
 
-    for stat in ("units", "farms", "cities", "squares"):
+    for stat in stats:
         plt.title(stat.capitalize())
         plt.ylabel(stat.capitalize())
         plt.xlabel("Time")
