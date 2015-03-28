@@ -6,6 +6,8 @@ import re
 import argparse
 import database
 import matplotlib.pyplot as plt
+from matplotlib import colors
+import matplotlib.cm as cmx
 
 NUM_COLUMNS_IN_GRID_TABLE = 22
 
@@ -91,12 +93,26 @@ def update_graphs():
     users = session.query(database.User)
     fig = plt.figure(figsize=(10, 7.5))
     ax = fig.add_subplot(111)
+    cmap = plt.get_cmap('Dark2')
+    c_norm = colors.Normalize(vmin=0, vmax=1)
+    scalar_map = cmx.ScalarMappable(norm=c_norm, cmap=cmap)
+    # only show users who have played the game in the time interval
+    # so, as an initial pass, create a list with only these users
+    active_users = []
+    for user in users:
+        data = session.query(database.UserLog).filter_by(user_id=user.id)
+        max_units = max([log.units for log in data])
+        if max_units != 0:
+            active_users.append(user)
+
+    users = active_users
+
     for stat in ("units", "farms", "cities", "squares"):
         plt.title(stat.capitalize())
         plt.ylabel(stat.capitalize())
         plt.xlabel("Time")
         min_time = max_time = None
-        for user in users:
+        for i, user in enumerate(users):
             data = session.query(database.UserLog).filter_by(user_id=user.id)
             if min_time is None or data[0].time < min_time:
                 min_time = data[0].time
@@ -104,8 +120,8 @@ def update_graphs():
                 max_time = data[-1].time
             xvals = [log.time for log in data]
             yvals = [log.__getattribute__(stat) for log in data]
-            if max(yvals) != 0:
-                plt.plot(xvals, yvals, label=user.name)
+            plt.plot(xvals, yvals, label=user.name,
+                    color=scalar_map.to_rgba(i / len(users)))
 
         ax.set_xlim(min_time, max_time)
         plt.legend(ncol=2, loc=2)
