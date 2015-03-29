@@ -18,12 +18,16 @@ stats = ("units", "farms", "cities", "squares")
 
 @route('/')
 def index():
-    return ''.join(
-        "<img src=\"%s.svg\"/>" % stat for stat in stats)
+    return '<link href="style.css" rel="stylesheet" type="text/css">' + \
+            ''.join("<img src=\"%s.svg\"/>" % stat for stat in stats)
 
 @route('/:image.svg')
 def get_image(image):
     return static_file("%s.svg" % image, os.getcwd())
+
+@route('/:name.css')
+def get_css(name):
+    return static_file("%s.css" % name, os.getcwd())
 
 def get_ranks_table():
     page = urllib.request.urlopen("http://codeelf.com/games/the-grid-2/grid/ranks/")
@@ -97,12 +101,56 @@ def update_database():
     database.add_data(players)
 
 
+def set_foregroundcolor(ax, color):
+    '''For the specified axes, sets the color of the frame, major ticks,
+    tick labels, axis labels, title and legend
+    From https://gist.github.com/jasonmc/1160951
+    '''
+    for tl in ax.get_xticklines() + ax.get_yticklines():
+        tl.set_color(color)
+    for spine in ax.spines:
+        ax.spines[spine].set_edgecolor(color)
+    for tick in ax.xaxis.get_major_ticks():
+        tick.label1.set_color(color)
+    for tick in ax.yaxis.get_major_ticks():
+        tick.label1.set_color(color)
+    ax.axes.xaxis.label.set_color(color)
+    ax.axes.yaxis.label.set_color(color)
+    ax.axes.xaxis.get_offset_text().set_color(color)
+    ax.axes.yaxis.get_offset_text().set_color(color)
+    ax.axes.title.set_color(color)
+    lh = ax.get_legend()
+    if lh != None:
+        lh.get_title().set_color(color)
+        lh.legendPatch.set_edgecolor('none')
+        labels = lh.get_texts()
+        for lab in labels:
+            lab.set_color(color)
+    for tl in ax.get_xticklabels():
+        tl.set_color(color)
+    for tl in ax.get_yticklabels():
+        tl.set_color(color)
+
+
+def set_backgroundcolor(ax, color):
+     '''Sets the background color of the current axes (and legend).
+         Use 'None' (with quotes) for transparent. To get transparent
+         background on saved figures, use:
+         pp.savefig("fig1.svg", transparent=True)
+         From https://gist.github.com/jasonmc/1160951
+     '''
+     ax.patch.set_facecolor(color)
+     lh = ax.get_legend()
+     if lh != None:
+         lh.legendPatch.set_facecolor(color)
+
+
 def update_graphs():
     session = database.Session()
     users = session.query(database.User)
     fig = plt.figure(figsize=(10, 7.5))
     ax = fig.add_subplot(111)
-    cmap = plt.get_cmap('Dark2')
+    cmap = plt.get_cmap('Paired')
     c_norm = colors.Normalize(vmin=0, vmax=1)
     scalar_map = cmx.ScalarMappable(norm=c_norm, cmap=cmap)
     # only show users who have played the game in the time interval
@@ -134,7 +182,9 @@ def update_graphs():
 
         ax.set_xlim(min_time, max_time)
         plt.legend(ncol=2, loc=2)
-        plt.savefig('%s.svg' % stat)
+        set_foregroundcolor(ax, 'white')
+        set_backgroundcolor(ax, 'black')
+        plt.savefig('%s.svg' % stat, transparent=True)
         fig.clf()
 
     session.close()
