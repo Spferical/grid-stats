@@ -149,7 +149,6 @@ def update_graphs():
     session = database.Session()
     users = session.query(database.User)
     fig = plt.figure(figsize=(10, 7.5))
-    ax = fig.add_subplot(111)
     cmap = plt.get_cmap('Paired')
     c_norm = colors.Normalize(vmin=0, vmax=1)
     scalar_map = cmx.ScalarMappable(norm=c_norm, cmap=cmap)
@@ -165,6 +164,7 @@ def update_graphs():
     users = active_users
 
     for stat in stats:
+        ax = fig.add_subplot(111)
         plt.title(stat.capitalize())
         plt.ylabel(stat.capitalize())
         plt.xlabel("Time")
@@ -181,7 +181,7 @@ def update_graphs():
                     color=scalar_map.to_rgba(i / len(users)))
 
         ax.set_xlim(min_time, max_time)
-        plt.legend(ncol=2, loc=2)
+        plt.legend(ncol=2, loc=2, framealpha=0)
         set_foregroundcolor(ax, 'white')
         set_backgroundcolor(ax, 'black')
         plt.savefig('%s.svg' % stat, transparent=True)
