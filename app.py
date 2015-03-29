@@ -6,6 +6,8 @@ import re
 import os
 import argparse
 import database
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib import colors
 import matplotlib.cm as cmx
