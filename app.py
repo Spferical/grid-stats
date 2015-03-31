@@ -14,7 +14,7 @@ import matplotlib.cm as cmx
 
 NUM_COLUMNS_IN_GRID_TABLE = 22
 
-stats = ("units", "farms", "cities", "squares")
+stats = ("units", "farms", "cities", "squares", "bank")
 
 @route('/')
 def index():

@@ -23,6 +23,7 @@ class UserLog(Base):
     units = Column(Integer)
     farms = Column(Integer)
     cities = Column(Integer)
+    bank = Column(Integer)
     user_id = Column(Integer, ForeignKey('user.id'))
 
 
@@ -52,6 +53,7 @@ def add_data(players):
             units=player['units'],
             farms=player['farms'],
             cities=player['cities'],
+            bank=player['bank'],
             user_id=user.id)
         session.add(user_log)
 
