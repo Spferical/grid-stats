@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
 from bottle import route, run, static_file
 from bs4 import BeautifulSoup
-import urllib.request
 import re
 import os
 import argparse
 import database
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from matplotlib import colors
-import matplotlib.cm as cmx
+import pandas as pd
+import numpy as np
+import bearcart
 
 NUM_COLUMNS_IN_GRID_TABLE = 22
 
@@ -30,6 +27,7 @@ def get_css(name):
     return static_file("%s.css" % name, os.getcwd())
 
 def get_ranks_table():
+    import urllib.request
     page = urllib.request.urlopen("http://codeelf.com/games/the-grid-2/grid/ranks/")
     soup = BeautifulSoup(page)
     data = []
@@ -148,10 +146,6 @@ def set_backgroundcolor(ax, color):
 def update_graphs():
     session = database.Session()
     users = session.query(database.User)
-    fig = plt.figure(figsize=(10, 7.5))
-    cmap = plt.get_cmap('Paired')
-    c_norm = colors.Normalize(vmin=0, vmax=1)
-    scalar_map = cmx.ScalarMappable(norm=c_norm, cmap=cmap)
     # only show users who have played the game in the time interval
     # so, as an initial pass, create a list with only these users
     active_users = []
@@ -163,30 +157,31 @@ def update_graphs():
 
     users = active_users
 
+    data = session.query(database.UserLog)
+    start_time = data[0].time
+    end_time = data[-1].time
+
     for stat in stats:
-        ax = fig.add_subplot(111)
-        plt.title(stat.capitalize())
-        plt.ylabel(stat.capitalize())
-        plt.xlabel("Time")
-        min_time = max_time = None
+        full_data = {}
         for i, user in enumerate(users):
             data = session.query(database.UserLog).filter_by(user_id=user.id)
-            if min_time is None or data[0].time < min_time:
-                min_time = data[0].time
-            if max_time is None or data[-1].time > max_time:
-                max_time = data[-1].time
             xvals = [log.time for log in data]
             yvals = [log.__getattribute__(stat) for log in data]
-            plt.plot(xvals, yvals, label=user.name,
-                    color=scalar_map.to_rgba(i / len(users)))
+            xvals = pd.DatetimeIndex(xvals)
+            ns1hr = 60*60*1000000000 # 1 hour in nanoseconds
+            xvals = pd.DatetimeIndex((xvals.astype(np.int64) / ns1hr + 1) * ns1hr)
+            series = pd.Series(yvals, index=xvals)
+            series = series.groupby(series.index).first()
+            full_data[user.name] = series
+        frame = pd.DataFrame(full_data)
+        vis = bearcart.Chart(frame)
 
-        ax.set_xlim(min_time, max_time)
-        plt.legend(ncol=2, loc=2, framealpha=0)
-        set_foregroundcolor(ax, 'white')
-        set_backgroundcolor(ax, 'black')
-        plt.savefig('%s.svg' % stat, transparent=True)
-        fig.clf()
-
+        html_path = '%s_index.html' % stat
+        data_path = '%s_data.json' % stat
+        js_path = 'rickshaw.min.js'
+        css_path = 'rickshaw.min.css'
+        vis.create_chart(html_path=html_path, data_path=data_path,
+                         js_path=js_path, css_path=css_path)
     session.close()
 
 
