@@ -8,6 +8,10 @@ import database
 import pandas as pd
 import numpy as np
 import bearcart
+try: # Python 3
+    from urllib.request import urlopen
+except ImportError: # Python 2
+    from urllib import urlopen
 
 NUM_COLUMNS_IN_GRID_TABLE = 22
 
@@ -24,8 +28,7 @@ def get_file(filename):
 
 
 def get_ranks_table():
-    import urllib.request
-    page = urllib.request.urlopen("http://codeelf.com/games/the-grid-2/grid/ranks/")
+    page = urlopen("http://codeelf.com/games/the-grid-2/grid/ranks/")
     soup = BeautifulSoup(page)
     data = []
     for row in soup.findAll("tr"):
