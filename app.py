@@ -15,16 +15,13 @@ stats = ("units", "farms", "cities", "squares", "bank")
 
 @route('/')
 def index():
-    return '<link href="style.css" rel="stylesheet" type="text/css">' + \
-            ''.join("<img src=\"%s.svg\"/>" % stat for stat in stats)
+    return '<link href="style.css" rel="stylesheet" type="text/css"><script language="javascript" type="text/javascript"> function resizeIframe(obj) { obj.style.height = obj.contentWindow.document.body.scrollHeight + \'px\'; } </script>' + ''.join('<iframe src="%s.html" onload=\'javascript:resizeIframe(this);\' width="100%%"></iframe><br>' %
+                stat for stat in stats)
 
-@route('/:image.svg')
-def get_image(image):
-    return static_file("%s.svg" % image, os.getcwd())
+@route(r'/<filename:re:.+\.(html|css|svg|js|json)>')
+def get_file(filename):
+    return static_file(filename, os.getcwd())
 
-@route('/:name.css')
-def get_css(name):
-    return static_file("%s.css" % name, os.getcwd())
 
 def get_ranks_table():
     import urllib.request
@@ -176,7 +173,7 @@ def update_graphs():
         frame = pd.DataFrame(full_data)
         vis = bearcart.Chart(frame)
 
-        html_path = '%s_index.html' % stat
+        html_path = '%s.html' % stat
         data_path = '%s_data.json' % stat
         js_path = 'rickshaw.min.js'
         css_path = 'rickshaw.min.css'
