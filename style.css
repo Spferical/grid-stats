@@ -2,3 +2,7 @@ section {
     float: left;
     margin: 16px;
 }
+
+h1 {
+	text-align: center;
+}

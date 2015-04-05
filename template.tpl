@@ -35,6 +35,7 @@
 <body>
 % for stat in stats:
 	<section>
+		<span> <h1> {{stat.capitalize()}} </h1> </span>
 		<div class="rickshaw-y-axis" id="bearcart_y_axis_id_{{stat}}"></div>
 		<div class="rickshaw-chart" id="bearcart_{{stat}}"></div>
 		<div class="rickshaw-legend" id="bearcart_legend_id_{{stat}}"></div>
