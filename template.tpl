@@ -33,6 +33,7 @@
 </style>
 </head>
 <body>
+
 % for stat in stats:
 	<section>
 		<span> <h1> {{stat.capitalize()}} </h1> </span>
@@ -41,9 +42,10 @@
 		<div class="rickshaw-legend" id="bearcart_legend_id_{{stat}}"></div>
 		<div class="rickshaw-slider" id="bearcart_slider_id_{{stat}}"></div>
 	</section>
+% end
 
 <script>
-d3.json('{{stat}}.json', function(error, json) {
+var draw_graph = function(stat, json) {
 
     var render_plot = (function(){
 
@@ -56,7 +58,7 @@ d3.json('{{stat}}.json', function(error, json) {
 			     data: json[i].data})
 	}
         var graph = new Rickshaw.Graph( {
-                element: d3.select("#bearcart_{{stat}}").node(),
+                element: d3.select("#bearcart_" + stat).node(),
                 min: 'auto',
                 width: 750,
                 height: 400,
@@ -67,42 +69,42 @@ d3.json('{{stat}}.json', function(error, json) {
         var x_axis = new Rickshaw.Graph.Axis.Time( { graph: graph } );
 
         var y_axis = new Rickshaw.Graph.Axis.Y( {
-        graph: graph,
-        orientation: 'left',
-        height: 400,
-        tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
-        element: d3.select("#bearcart_y_axis_id_{{stat}}").node()
-} );
+		graph: graph,
+		orientation: 'left',
+		height: 400,
+		tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+		element: d3.select("#bearcart_y_axis_id_" + stat).node()
+	} );
 
         var hoverDetail = new Rickshaw.Graph.HoverDetail( {
-    graph: graph,
+	    graph: graph,
 
-} );
+	} );
 
         var legend = new Rickshaw.Graph.Legend({
-    graph: graph,
-    element: d3.select("#bearcart_legend_id_{{stat}}").node()
+		graph: graph,
+		element: d3.select("#bearcart_legend_id_" + stat).node()
+	});
 
-});
-
-var shelving = new Rickshaw.Graph.Behavior.Series.Toggle({
-    graph: graph,
-    legend: legend
-});
+	var shelving = new Rickshaw.Graph.Behavior.Series.Toggle({
+	    graph: graph,
+	    legend: legend
+	});
 
         var slider = new Rickshaw.Graph.RangeSlider({
-    graph: graph,
-    element: d3.select("#bearcart_slider_id_{{stat}}").node()
-});
+	    graph: graph,
+	    element: d3.select("#bearcart_slider_id_" + stat).node()
+	});
 
         graph.render();
 
     })();
-
-  });
-
-</script>
+}
+% for stat in stats:
+d3.json('{{stat}}.json', function(error, json) {
+	draw_graph("{{stat}}", json);
+});
 % end
-
+</script>
 
 </body>
