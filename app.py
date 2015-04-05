@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-from bottle import route, run, static_file
+from bottle import route, run, static_file, template
 from bs4 import BeautifulSoup
 import re
 import os
@@ -19,8 +19,7 @@ stats = ("units", "farms", "cities", "squares", "bank")
 
 @route('/')
 def index():
-    return '<link href="style.css" rel="stylesheet" type="text/css"><script language="javascript" type="text/javascript"> function resizeIframe(obj) { obj.style.height = obj.contentWindow.document.body.scrollHeight + \'px\'; } </script>' + ''.join('<iframe src="%s.html" onload=\'javascript:resizeIframe(this);\' width="100%%"></iframe><br>' %
-                stat for stat in stats)
+    return template('template.tpl', stats=stats)
 
 @route(r'/<filename:re:.+\.(html|css|svg|js|json)>')
 def get_file(filename):
@@ -177,11 +176,8 @@ def update_graphs():
         vis = bearcart.Chart(frame)
 
         html_path = '%s.html' % stat
-        data_path = '%s_data.json' % stat
-        js_path = 'rickshaw.min.js'
-        css_path = 'rickshaw.min.css'
-        vis.create_chart(html_path=html_path, data_path=data_path,
-                         js_path=js_path, css_path=css_path)
+        data_path = '%s.json' % stat
+        vis.create_chart(html_path=html_path, data_path=data_path)
     session.close()
 
 
