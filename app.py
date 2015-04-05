@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 from bottle import route, run, static_file
 from bs4 import BeautifulSoup
 import re
