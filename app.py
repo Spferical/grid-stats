@@ -8,18 +8,20 @@ import database
 import pandas as pd
 import numpy as np
 import bearcart
-try: # Python 3
+try:  # Python 3
     from urllib.request import urlopen
-except ImportError: # Python 2
+except ImportError:  # Python 2
     from urllib import urlopen
 
 NUM_COLUMNS_IN_GRID_TABLE = 22
 
 stats = ("units", "farms", "cities", "squares", "bank")
 
+
 @route('/')
 def index():
     return template('template.tpl', stats=stats)
+
 
 @route(r'/<filename:re:.+\.(html|css|svg|js|json)>')
 def get_file(filename):
@@ -66,28 +68,28 @@ def parse_number(x):
 
 def parse_player(row):
     player = {
-        'rank' : row[0],
-        'name' : row[1],
-        'squares' : row[2],
-        'units' : row[3],
-        'clout' : row[4],
-        'gold' : row[5],
-        'silver' : row[6],
-        'farms' : row[7],
-        'cities' : row[8],
-        'rebels' : row[9],
-        'bank' : row[10],
-        'wizards' : row[11],
-        'energy' : row[12],
-        'perm' : row[13],
-        'wipes' : row[14],
-        'wiped' : row[15],
-        'IPC' : row[16],
-        'kills' : row[17],
-        'slain' : row[18],
-        'loan' : row[19],
-        'trait' : row[20],
-        'activity' : row[21],
+        'rank': row[0],
+        'name': row[1],
+        'squares': row[2],
+        'units': row[3],
+        'clout': row[4],
+        'gold': row[5],
+        'silver': row[6],
+        'farms': row[7],
+        'cities': row[8],
+        'rebels': row[9],
+        'bank': row[10],
+        'wizards': row[11],
+        'energy': row[12],
+        'perm': row[13],
+        'wipes': row[14],
+        'wiped': row[15],
+        'IPC': row[16],
+        'kills': row[17],
+        'slain': row[18],
+        'loan': row[19],
+        'trait': row[20],
+        'activity': row[21],
     }
     return player
 
@@ -130,16 +132,16 @@ def set_foregroundcolor(ax, color):
 
 
 def set_backgroundcolor(ax, color):
-     '''Sets the background color of the current axes (and legend).
+    '''Sets the background color of the current axes (and legend).
          Use 'None' (with quotes) for transparent. To get transparent
          background on saved figures, use:
          pp.savefig("fig1.svg", transparent=True)
          From https://gist.github.com/jasonmc/1160951
      '''
-     ax.patch.set_facecolor(color)
-     lh = ax.get_legend()
-     if lh != None:
-         lh.legendPatch.set_facecolor(color)
+    ax.patch.set_facecolor(color)
+    lh = ax.get_legend()
+    if lh != None:
+        lh.legendPatch.set_facecolor(color)
 
 
 def update_graphs():
@@ -167,8 +169,9 @@ def update_graphs():
             xvals = [log.time for log in data]
             yvals = [log.__getattribute__(stat) for log in data]
             xvals = pd.DatetimeIndex(xvals)
-            ns1hr = 60*60*1000000000 # 1 hour in nanoseconds
-            xvals = pd.DatetimeIndex((xvals.astype(np.int64) / ns1hr + 1) * ns1hr)
+            ns1hr = 60 * 60 * 1000000000  # 1 hour in nanoseconds
+            xvals = pd.DatetimeIndex(
+                (xvals.astype(np.int64) / ns1hr + 1) * ns1hr)
             series = pd.Series(yvals, index=xvals)
             series = series.groupby(series.index).first()
             full_data[user.name] = series
@@ -185,12 +188,13 @@ def main():
     parser = argparse.ArgumentParser(
         description="Web application to graph stats of The Grid over time")
     subparsers = parser.add_subparsers(dest="command")
-    server_parser = subparsers.add_parser(
-        "server", help="run web server")
+    server_parser = subparsers.add_parser("server", help="run web server")
     update_database_parser = subparsers.add_parser(
-        "update-database", help="update the grid stats database")
+        "update-database",
+        help="update the grid stats database")
     create_database_parser = subparsers.add_parser(
-        "create-database", help="create the grid stats database")
+        "create-database",
+        help="create the grid stats database")
     args = vars(parser.parse_args())
     if args["command"] == "server":
         run_server()
