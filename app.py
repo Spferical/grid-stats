@@ -170,9 +170,10 @@ def update_graphs():
             yvals = [log.__getattribute__(stat) for log in data]
             xvals = pd.DatetimeIndex(xvals)
             ns1hr = 60 * 60 * 1000000000  # 1 hour in nanoseconds
-            xvals = pd.DatetimeIndex(
-                (xvals.astype(np.int64) / ns1hr + 1) * ns1hr)
+            # round to nearest minute
+            xvals = np.array(xvals, dtype='datetime64[h]')
             series = pd.Series(yvals, index=xvals)
+            # remove duplicate NaNs
             series = series.groupby(series.index).first()
             full_data[user.name] = series
         frame = pd.DataFrame(full_data)
