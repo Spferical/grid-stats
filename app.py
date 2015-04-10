@@ -196,6 +196,9 @@ def main():
     create_database_parser = subparsers.add_parser(
         "create-database",
         help="create the grid stats database")
+    update_graphs_parser = subparsers.add_parser(
+        "update-graphs",
+        help="update the grid stats graphs")
     args = vars(parser.parse_args())
     if args["command"] == "server":
         run_server()
@@ -204,6 +207,8 @@ def main():
         update_graphs()
     elif args["command"] == "create-database":
         database.create_database()
+    elif args["command"] == "update-graphs":
+        update_graphs()
 
 
 def run_server():
