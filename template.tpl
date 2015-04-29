@@ -108,7 +108,7 @@ var draw_graph = function(stat, json) {
 
 var show_stat = function(stat) {
     // draw the graphs
-    d3.json(stat + ".json", function(error, json) {
+    d3.json(stat + "_{{interval}}.json", function(error, json) {
         draw_graph(stat, json);
     });
 

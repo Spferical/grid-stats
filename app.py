@@ -8,6 +8,7 @@ import database
 import pandas as pd
 import numpy as np
 import bearcart
+import datetime
 try:  # Python 3
     from urllib.request import urlopen
 except ImportError:  # Python 2
@@ -16,12 +17,17 @@ except ImportError:  # Python 2
 NUM_COLUMNS_IN_GRID_TABLE = 22
 
 stats = ("units", "farms", "cities", "squares", "bank")
+intervals = ('all', 'month', 'week', 'day')
 
+
+# one page for each interval
+@route('/<interval:re:(%s)>' % '|'.join(intervals))
+def show_graphs(interval):
+    return template('template.tpl', stats=stats, interval=interval)
 
 @route('/')
 def index():
-    return template('template.tpl', stats=stats)
-
+    return static_file('index.html', os.getcwd())
 
 @route(r'/<filename:re:.+\.(html|css|svg|js|json)>')
 def get_file(filename):
@@ -145,27 +151,50 @@ def set_backgroundcolor(ax, color):
 
 
 def update_graphs():
+    for interval in intervals:
+        update_graphs_for_interval(interval)
+
+
+def update_graphs_for_interval(interval):
+    if interval == 'all':
+        min_time = datetime.datetime.min
+    elif interval == 'month':
+        min_time = datetime.datetime.now() -  datetime.timedelta(days=30)
+    elif interval == 'week':
+        min_time = datetime.datetime.now() -  datetime.timedelta(days=7)
+    elif interval == 'day':
+        min_time = datetime.datetime.now() -  datetime.timedelta(days=1)
+
     session = database.Session()
     users = session.query(database.User)
     # only show users who have played the game in the time interval
     # so, as an initial pass, create a list with only these users
     active_users = []
     for user in users:
-        data = session.query(database.UserLog).filter_by(user_id=user.id)
-        max_units = max([log.units for log in data])
+        data = session.query(database.UserLog).filter(
+            database.UserLog.user_id == user.id,
+            database.UserLog.time >= min_time)
+        if len(data.all()) != 0:
+            max_units = max([log.units for log in data])
+        else:
+            max_units = 0
         if max_units != 0:
             active_users.append(user)
 
     users = active_users
 
-    data = session.query(database.UserLog)
+    data = session.query(database.UserLog).filter(
+        database.UserLog.time >= min_time)
+
     start_time = data[0].time
     end_time = data[-1].time
 
     for stat in stats:
         full_data = {}
         for i, user in enumerate(users):
-            data = session.query(database.UserLog).filter_by(user_id=user.id)
+            data = session.query(database.UserLog).filter(
+                database.UserLog.user_id == user.id,
+                database.UserLog.time >= min_time)
             xvals = [log.time for log in data]
             yvals = [log.__getattribute__(stat) for log in data]
             xvals = pd.DatetimeIndex(xvals)
@@ -179,8 +208,8 @@ def update_graphs():
         frame = pd.DataFrame(full_data)
         vis = bearcart.Chart(frame)
 
-        html_path = '%s.html' % stat
-        data_path = '%s.json' % stat
+        html_path = '%s_%s.html' % (stat, interval)
+        data_path = '%s_%s.json' % (stat, interval)
         vis.create_chart(html_path=html_path, data_path=data_path)
     session.close()
 
