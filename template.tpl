@@ -33,9 +33,14 @@
 </style>
 </head>
 <body>
-
+    <section id="buttons">
 % for stat in stats:
-	<section>
+
+        <button id="{{stat}}button" onclick='show_stat("{{stat}}")'> show {{stat}} </button>
+% end
+    </section>
+% for stat in stats:
+    <section id="{{stat}}" style="display:none">
 		<span> <h1> {{stat.capitalize()}} </h1> </span>
 		<div class="rickshaw-y-axis" id="bearcart_y_axis_id_{{stat}}"></div>
 		<div class="rickshaw-chart" id="bearcart_{{stat}}"></div>
@@ -100,11 +105,18 @@ var draw_graph = function(stat, json) {
 
     })();
 }
-% for stat in stats:
-d3.json('{{stat}}.json', function(error, json) {
-	draw_graph("{{stat}}", json);
-});
-% end
-</script>
 
+var show_stat = function(stat) {
+    // draw the graphs
+    d3.json(stat + ".json", function(error, json) {
+        draw_graph(stat, json);
+    });
+
+    // show the section
+    document.getElementById(stat).style.display='block'
+
+    // hide the button if it exists
+    document.getElementById(stat + "button").style.display='none';
+}
+</script>
 </body>
