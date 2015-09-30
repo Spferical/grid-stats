@@ -17,7 +17,7 @@ except ImportError:  # Python 2
 NUM_COLUMNS_IN_GRID_TABLE = 22
 
 stats = ("units", "farms", "cities", "squares", "bank")
-intervals = ('all', 'month', 'week', 'day')
+intervals = ('month', 'week', 'day')
 
 
 # one page for each interval
