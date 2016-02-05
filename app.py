@@ -5,10 +5,8 @@ import re
 import os
 import argparse
 import database
-import pandas as pd
-import numpy as np
-import bearcart
 import datetime
+import json
 try:  # Python 3
     from urllib.request import urlopen
 except ImportError:  # Python 2
@@ -17,7 +15,7 @@ except ImportError:  # Python 2
 NUM_COLUMNS_IN_GRID_TABLE = 22
 
 stats = ("units", "farms", "cities", "squares", "bank")
-intervals = ('month', 'week', 'day')
+intervals = ('all', 'month', 'week', 'day')
 
 
 # one page for each interval
@@ -158,6 +156,8 @@ def update_graphs():
 def update_graphs_for_interval(interval):
     if interval == 'all':
         min_time = datetime.datetime.min
+    elif interval == 'year':
+        min_time = datetime.datetime.now() - datetime.timedelta(days=365)
     elif interval == 'month':
         min_time = datetime.datetime.now() -  datetime.timedelta(days=30)
     elif interval == 'week':
@@ -174,12 +174,10 @@ def update_graphs_for_interval(interval):
         data = session.query(database.UserLog).filter(
             database.UserLog.user_id == user.id,
             database.UserLog.time >= min_time)
-        if len(data.all()) != 0:
-            max_units = max([log.units for log in data])
-        else:
-            max_units = 0
-        if max_units != 0:
-            active_users.append(user)
+        for log in data:
+            if log.units > 0:
+                active_users.append(user)
+                break
 
     users = active_users
 
@@ -188,29 +186,47 @@ def update_graphs_for_interval(interval):
 
     start_time = data[0].time
     end_time = data[-1].time
-
     for stat in stats:
-        full_data = {}
+        full_data = []
         for i, user in enumerate(users):
             data = session.query(database.UserLog).filter(
                 database.UserLog.user_id == user.id,
                 database.UserLog.time >= min_time)
-            xvals = [log.time for log in data]
-            yvals = [log.__getattribute__(stat) for log in data]
-            xvals = pd.DatetimeIndex(xvals)
-            ns1hr = 60 * 60 * 1000000000  # 1 hour in nanoseconds
-            # round to nearest minute
-            xvals = np.array(xvals, dtype='datetime64[h]')
-            series = pd.Series(yvals, index=xvals)
-            # remove duplicate NaNs
-            series = series.groupby(series.index).first()
-            full_data[user.name] = series
-        frame = pd.DataFrame(full_data)
-        vis = bearcart.Chart(frame)
+            time_interval = datetime.timedelta(hours=1)
+            userdata = {'name': user.name}
+            points = []
+            base_time = start_time
+            values_in_interval = []
+            for log in data:
+                x = log.time
+                y = log.__getattribute__(stat)
+                if x < base_time + time_interval:
+                    if y:
+                        values_in_interval.append(y)
+                else:
+                    if len(values_in_interval) > 0:
+                        avg = sum(values_in_interval) / len(values_in_interval)
+                        epoch = datetime.datetime(1970, 1, 1)
+                        x_value = (base_time + time_interval / 2
+                                   - epoch).total_seconds()
+                        points.append({'x': x_value, 'y': avg})
+                    values_in_interval = []
+                    if y:
+                        values_in_interval.append(y)
+                    while x > base_time + time_interval:
+                        base_time += time_interval
+            if values_in_interval:
+                avg = sum(values_in_interval) / len(values_in_interval)
+                epoch = datetime.datetime(1970, 1, 1)
+                x_value = (base_time + time_interval / 2
+                            - epoch).total_seconds()
+                points.append({'x': x_value, 'y': avg})
+            userdata['data'] = points
+            full_data.append(userdata)
 
-        html_path = '%s_%s.html' % (stat, interval)
         data_path = '%s_%s.json' % (stat, interval)
-        vis.create_chart(html_path=html_path, data_path=data_path)
+        with open(data_path, 'w') as data_file:
+            json.dump(full_data, data_file)
     session.close()
 
 
