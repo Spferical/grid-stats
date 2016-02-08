@@ -181,11 +181,12 @@ def update_graphs_for_interval(interval):
 
     users = active_users
 
-    data = session.query(database.UserLog).filter(
-        database.UserLog.time >= min_time)
+    start_time = session.query(database.UserLog).filter(
+        database.UserLog.time > min_time).first().time
+    end_time = session.query(database.UserLog).filter(
+        database.UserLog.time > min_time).\
+        order_by(database.UserLog.time.desc()).first()
 
-    start_time = data[0].time
-    end_time = data[-1].time
     for stat in stats:
         full_data = []
         for i, user in enumerate(users):
