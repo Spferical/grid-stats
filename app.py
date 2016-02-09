@@ -173,11 +173,10 @@ def update_graphs_for_interval(interval):
     for user in users:
         data = session.query(database.UserLog).filter(
             database.UserLog.user_id == user.id,
-            database.UserLog.time >= min_time)
-        for log in data:
-            if log.units > 0:
-                active_users.append(user)
-                break
+            database.UserLog.time >= min_time,
+            database.UserLog.units > 0)
+        if data:
+            active_users.append(user)
 
     users = active_users
 
@@ -192,7 +191,8 @@ def update_graphs_for_interval(interval):
         for i, user in enumerate(users):
             data = session.query(database.UserLog).filter(
                 database.UserLog.user_id == user.id,
-                database.UserLog.time >= min_time)
+                database.UserLog.time >= min_time,
+                getattr(database.UserLog, stat) > 0)
             time_interval = datetime.timedelta(hours=1)
             userdata = {'name': user.name}
             points = []
@@ -200,10 +200,9 @@ def update_graphs_for_interval(interval):
             values_in_interval = []
             for log in data:
                 x = log.time
-                y = log.__getattribute__(stat)
+                y = getattr(log, stat)
                 if x < base_time + time_interval:
-                    if y:
-                        values_in_interval.append(y)
+                    values_in_interval.append(y)
                 else:
                     if len(values_in_interval) > 0:
                         avg = sum(values_in_interval) / len(values_in_interval)
@@ -211,9 +210,7 @@ def update_graphs_for_interval(interval):
                         x_value = (base_time + time_interval / 2
                                    - epoch).total_seconds()
                         points.append({'x': x_value, 'y': avg})
-                    values_in_interval = []
-                    if y:
-                        values_in_interval.append(y)
+                    values_in_interval = [y]
                     while x > base_time + time_interval:
                         base_time += time_interval
             if values_in_interval:
