@@ -180,47 +180,23 @@ def update_graphs_for_interval(interval):
 
     users = active_users
 
-    start_time = session.query(database.UserLog).filter(
-        database.UserLog.time > min_time).first().time
-    end_time = session.query(database.UserLog).filter(
-        database.UserLog.time > min_time).\
-        order_by(database.UserLog.time.desc()).first()
-
     for stat in stats:
+        data = session.query(database.UserLog).filter(
+            database.UserLog.time >= min_time,
+            getattr(database.UserLog, stat) > 0).yield_per(100)
         full_data = []
-        for i, user in enumerate(users):
-            data = session.query(database.UserLog).filter(
-                database.UserLog.user_id == user.id,
-                database.UserLog.time >= min_time,
-                getattr(database.UserLog, stat) > 0)
-            time_interval = datetime.timedelta(hours=1)
-            userdata = {'name': user.name}
-            points = []
-            base_time = start_time
-            values_in_interval = []
-            for log in data:
-                x = log.time
-                y = getattr(log, stat)
-                if x < base_time + time_interval:
-                    values_in_interval.append(y)
-                else:
-                    if len(values_in_interval) > 0:
-                        avg = sum(values_in_interval) / len(values_in_interval)
-                        epoch = datetime.datetime(1970, 1, 1)
-                        x_value = (base_time + time_interval / 2
-                                   - epoch).total_seconds()
-                        points.append({'x': x_value, 'y': avg})
-                    values_in_interval = [y]
-                    while x > base_time + time_interval:
-                        base_time += time_interval
-            if values_in_interval:
-                avg = sum(values_in_interval) / len(values_in_interval)
-                epoch = datetime.datetime(1970, 1, 1)
-                x_value = (base_time + time_interval / 2
-                            - epoch).total_seconds()
-                points.append({'x': x_value, 'y': avg})
-            userdata['data'] = points
-            full_data.append(userdata)
+        user_datas = {}
+        for log in data:
+            if log.user_id not in user_datas:
+                user_datas[log.user_id] = {
+                    'name': session.query(database.User).get(log.user_id).name,
+                    'data': []}
+            epoch = datetime.datetime(1970, 1, 1)
+            user_datas[log.user_id]['data'].append(
+                {'x': (log.time - epoch).total_seconds(),
+                 'y': getattr(log, stat)})
+        for user_data in user_datas.values():
+            full_data.append(user_data)
 
         data_path = '%s_%s.json' % (stat, interval)
         with open(data_path, 'w') as data_file:
