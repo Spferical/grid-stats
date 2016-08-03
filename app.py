@@ -180,8 +180,12 @@ def update_graphs_for_interval(interval):
 
     users = active_users
 
+    epoch = datetime.datetime(1970, 1, 1)
     for stat in stats:
-        data = session.query(database.UserLog).filter(
+        data = session.query(
+                database.UserLog.user_id,
+                database.UserLog.time,
+                getattr(database.UserLog, stat)).filter(
             database.UserLog.time >= min_time,
             getattr(database.UserLog, stat) > 0).yield_per(100)
         full_data = []
@@ -191,7 +195,6 @@ def update_graphs_for_interval(interval):
                 user_datas[log.user_id] = {
                     'name': session.query(database.User).get(log.user_id).name,
                     'data': []}
-            epoch = datetime.datetime(1970, 1, 1)
             user_datas[log.user_id]['data'].append(
                 {'x': (log.time - epoch).total_seconds(),
                  'y': getattr(log, stat)})
