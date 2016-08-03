@@ -23,9 +23,11 @@ intervals = ('all', 'month', 'week', 'day')
 def show_graphs(interval):
     return template('template.tpl', stats=stats, interval=interval)
 
+
 @route('/')
 def index():
     return static_file('index.html', os.getcwd())
+
 
 @route(r'/<filename:re:.+\.(html|css|svg|js|json)>')
 def get_file(filename):
@@ -123,7 +125,7 @@ def set_foregroundcolor(ax, color):
     ax.axes.yaxis.get_offset_text().set_color(color)
     ax.axes.title.set_color(color)
     lh = ax.get_legend()
-    if lh != None:
+    if lh is not None:
         lh.get_title().set_color(color)
         lh.legendPatch.set_edgecolor('none')
         labels = lh.get_texts()
@@ -144,7 +146,7 @@ def set_backgroundcolor(ax, color):
      '''
     ax.patch.set_facecolor(color)
     lh = ax.get_legend()
-    if lh != None:
+    if lh is not None:
         lh.legendPatch.set_facecolor(color)
 
 
@@ -159,11 +161,11 @@ def update_graphs_for_interval(interval):
     elif interval == 'year':
         min_time = datetime.datetime.now() - datetime.timedelta(days=365)
     elif interval == 'month':
-        min_time = datetime.datetime.now() -  datetime.timedelta(days=30)
+        min_time = datetime.datetime.now() - datetime.timedelta(days=30)
     elif interval == 'week':
-        min_time = datetime.datetime.now() -  datetime.timedelta(days=7)
+        min_time = datetime.datetime.now() - datetime.timedelta(days=7)
     elif interval == 'day':
-        min_time = datetime.datetime.now() -  datetime.timedelta(days=1)
+        min_time = datetime.datetime.now() - datetime.timedelta(days=1)
 
     session = database.Session()
     users = session.query(database.User)
@@ -211,14 +213,14 @@ def main():
     parser = argparse.ArgumentParser(
         description="Web application to graph stats of The Grid over time")
     subparsers = parser.add_subparsers(dest="command")
-    server_parser = subparsers.add_parser("server", help="run web server")
-    update_database_parser = subparsers.add_parser(
+    subparsers.add_parser("server", help="run web server")
+    subparsers.add_parser(
         "update-database",
         help="update the grid stats database")
-    create_database_parser = subparsers.add_parser(
+    subparsers.add_parser(
         "create-database",
         help="create the grid stats database")
-    update_graphs_parser = subparsers.add_parser(
+    subparsers.add_parser(
         "update-graphs",
         help="update the grid stats graphs")
     args = vars(parser.parse_args())
