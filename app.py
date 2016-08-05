@@ -6,7 +6,7 @@ import os
 import argparse
 import database
 import datetime
-import json
+import ujson as json
 try:  # Python 3
     from urllib.request import urlopen
 except ImportError:  # Python 2
