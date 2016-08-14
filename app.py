@@ -1,37 +1,16 @@
 #!/usr/bin/env python2
-from bottle import route, run, static_file, template
 from bs4 import BeautifulSoup
 import re
-import os
 import argparse
-import database
 import datetime
-import ujson as json
+from influxdb import InfluxDBClient
 try:  # Python 3
     from urllib.request import urlopen
 except ImportError:  # Python 2
     from urllib import urlopen
 
+
 NUM_COLUMNS_IN_GRID_TABLE = 22
-
-stats = ("units", "farms", "cities", "squares", "bank")
-intervals = ('all', 'month', 'week', 'day')
-
-
-# one page for each interval
-@route('/<interval:re:(%s)>' % '|'.join(intervals))
-def show_graphs(interval):
-    return template('template.tpl', stats=stats, interval=interval)
-
-
-@route('/')
-def index():
-    return static_file('index.html', os.getcwd())
-
-
-@route(r'/<filename:re:.+\.(html|css|svg|js|json)>')
-def get_file(filename):
-    return static_file(filename, os.getcwd())
 
 
 def get_ranks_table():
@@ -103,7 +82,38 @@ def parse_player(row):
 def update_database():
     data = get_ranks_table()
     players = [parse_player(row) for row in data]
-    database.add_data(players)
+    client = InfluxDBClient()
+    client.switch_database('grid')
+    time = datetime.datetime.now()
+    points = [{'tags': {'username': player['name']},
+             'time': time,
+             'measurement': 'userlog',
+             'fields': {
+                 'squares': player['squares'],
+                 'units': player['units'],
+                 'farms': player['farms'],
+                 'cities': player['cities'],
+                 'bank': player['bank'],
+                 'clout': player['clout'],
+                 'gold': player['gold'],
+                 'silver': player['silver'],
+                 'rebels': player['rebels'],
+                 'wizards': player['wizards'],
+                 'energy': player['energy'],
+                 'perm': player['perm'],
+                 'wipes': player['wipes'],
+                 'kills': player['kills'],
+                 'slain': player['slain'],
+                 'loan': player['loan'],
+                 'trait': player['trait']
+                 }
+             } for player in players]
+    client.write_points(points)
+
+
+def create_database():
+    client = InfluxDBClient()
+    client.create_database('grid')
 
 
 def set_foregroundcolor(ax, color):
@@ -150,93 +160,21 @@ def set_backgroundcolor(ax, color):
         lh.legendPatch.set_facecolor(color)
 
 
-def update_graphs():
-    for interval in intervals:
-        update_graphs_for_interval(interval)
-
-
-def update_graphs_for_interval(interval):
-    if interval == 'all':
-        min_time = datetime.datetime.min
-    elif interval == 'year':
-        min_time = datetime.datetime.now() - datetime.timedelta(days=365)
-    elif interval == 'month':
-        min_time = datetime.datetime.now() - datetime.timedelta(days=30)
-    elif interval == 'week':
-        min_time = datetime.datetime.now() - datetime.timedelta(days=7)
-    elif interval == 'day':
-        min_time = datetime.datetime.now() - datetime.timedelta(days=1)
-
-    session = database.Session()
-    users = session.query(database.User)
-    # only show users who have played the game in the time interval
-    # so, as an initial pass, create a list with only these users
-    active_users = []
-    for user in users:
-        data = session.query(database.UserLog).filter(
-            database.UserLog.user_id == user.id,
-            database.UserLog.time >= min_time,
-            database.UserLog.units > 0)
-        if data:
-            active_users.append(user)
-
-    users = active_users
-
-    epoch = datetime.datetime(1970, 1, 1)
-    for stat in stats:
-        data = session.query(
-                database.UserLog.user_id,
-                database.UserLog.time,
-                getattr(database.UserLog, stat)).filter(
-            database.UserLog.time >= min_time,
-            getattr(database.UserLog, stat) > 0).yield_per(100)
-        full_data = []
-        user_datas = {}
-        for log in data:
-            if log.user_id not in user_datas:
-                user_datas[log.user_id] = {
-                    'name': session.query(database.User).get(log.user_id).name,
-                    'data': []}
-            user_datas[log.user_id]['data'].append(
-                {'x': (log.time - epoch).total_seconds(),
-                 'y': getattr(log, stat)})
-        for user_data in user_datas.values():
-            full_data.append(user_data)
-
-        data_path = '%s_%s.json' % (stat, interval)
-        with open(data_path, 'w') as data_file:
-            json.dump(full_data, data_file)
-    session.close()
-
-
 def main():
     parser = argparse.ArgumentParser(
         description="Web application to graph stats of The Grid over time")
     subparsers = parser.add_subparsers(dest="command")
-    subparsers.add_parser("server", help="run web server")
     subparsers.add_parser(
         "update-database",
         help="update the grid stats database")
     subparsers.add_parser(
         "create-database",
         help="create the grid stats database")
-    subparsers.add_parser(
-        "update-graphs",
-        help="update the grid stats graphs")
     args = vars(parser.parse_args())
-    if args["command"] == "server":
-        run_server()
-    elif args["command"] == "update-database":
+    if args["command"] == "update-database":
         update_database()
-        update_graphs()
     elif args["command"] == "create-database":
-        database.create_database()
-    elif args["command"] == "update-graphs":
-        update_graphs()
-
-
-def run_server():
-    run(host='0.0.0.0', port=8082)
+        create_database()
 
 
 if __name__ == '__main__':
