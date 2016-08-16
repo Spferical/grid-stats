@@ -3,13 +3,17 @@ from influxdb import InfluxDBClient
 s = db.Session()
 users = s.query(db.User)
 c = InfluxDBClient()
-c.create_database('grid')
 c.switch_database('grid')
-logs = s.query(db.UserLog)
+logs = s.query(db.UserLog).yield_per(100)
+
 usernames = {}
 for user in s.query(db.User):
     usernames[user.id] = user.name
-points = [{
+
+points = []
+
+for log in logs:
+    points.append({
         "tags": {"username": usernames[log.user_id]},
         "time": log.time,
         'measurement': 'userlog',
@@ -18,6 +22,9 @@ points = [{
             "units": log.units,
             "farms": log.farms,
             "cities": log.cities,
-            "bank": log.bank}}
-        for log in logs]
+            "bank": log.bank}})
+
+    if len(points) >= 100:
+        c.write_points(points)
+        points = []
 c.write_points(points)
