@@ -10,12 +10,14 @@ c.switch_database('grid')
 
 kairosdb_server = "http://localhost:8080"
 
+now = datetime.datetime.now()
 for day in range(1000, 0, -1):
-    now = datetime.datetime.now().isoformat('T') + 'Z'
+    time1 = (now - datetime.timedelta(days=day)).isoformat('T') + 'Z'
+    time2 = (now - datetime.timedelta(days=day - 1)).isoformat('T') + 'Z'
     queue = []
     data = c.query("select * from userlog " +
-                   "where time >= '{}' - {}d ".format(now, day) +
-                   "and time <= '{}' - {}d;".format(now, day-1))
+                   "where time >= '{}' ".format(time1) +
+                   "and time <= '{}';".format(time2))
     print("Migrating data from {}-{} days ago".format(day-1, day))
     for data in data:
         for x in data:
