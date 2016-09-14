@@ -16,6 +16,7 @@ for day in range(1000, 0, -1):
     data = c.query("select * from userlog " +
                    "where time >= '{}' - {}d ".format(now, day) +
                    "and time <= '{}' - {}d;".format(now, day-1))
+    print("Migrating data from {}-{} days ago".format(day-1, day))
     for data in data:
         for x in data:
             time = int(parser.parse(x['time']).timestamp() * 1000)
