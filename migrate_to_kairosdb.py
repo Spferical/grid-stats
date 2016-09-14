@@ -29,7 +29,7 @@ for day in range(1000, 0, -1):
                         ],
                         'tags': {'username': x['username']},
                     })
-                    if len(queue) > 10:
+                    if len(queue) > 100:
                         response = requests.post(
                             kairosdb_server + "/api/v1/datapoints",
                             json.dumps(queue))
