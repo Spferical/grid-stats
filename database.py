@@ -1,66 +1,46 @@
+import requests
+import json
 import datetime
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm.exc import NoResultFound
-
-Base = declarative_base()
 
 
-class User(Base):
-    __tablename__ = 'user'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False)
+KAIROSDB_SERVER = "http://localhost:8080"
 
+def write_player_data(players):
+    """ Writes a bunch of player data to the time-series database.
 
-class UserLog(Base):
-    __tablename__ = 'userlog'
-    id = Column(Integer, primary_key=True)
-    time = Column(DateTime())
-    squares = Column(Integer)
-    units = Column(Integer)
-    farms = Column(Integer)
-    cities = Column(Integer)
-    bank = Column(Integer)
-    user_id = Column(Integer, ForeignKey('user.id'))
-
-
-def create_database():
-    Base.metadata.create_all(engine)
-
-
-def add_data(players):
-    session = Session()
+    players is a list of dicts with the key "name" for the player's
+    username and another key for each stat we are tracking."""
+    time = int(datetime.datetime.now().timestamp() * 1000)
+    points = []
     for player in players:
-        # get the user in database
-        query = session.query(User).filter_by(name=player['name'])
-        try:
-            user = query.one()
-        except NoResultFound:
-            # user is not in database yet
-            # create a new user
-            user = User(name=player['name'])
-            session.add(user)
-            # commit the user to the database, thereby giving him an id
-            session.commit()
-
-        # then add the time series data
-        user_log = UserLog(
-            time=datetime.datetime.now(),
-            squares=player['squares'],
-            units=player['units'],
-            farms=player['farms'],
-            cities=player['cities'],
-            bank=player['bank'],
-            user_id=user.id)
-        session.add(user_log)
-
-        # commit and close the session
-        session.commit()
-        session.close()
+        for stat in player:
+            if stat != 'name':
+                points.append({
+                    "name": stat,
+                    "datapoints": [
+                        [time, player[stat]],
+                    ],
+                    "tags": {"username": player["name"]},
+                })
+    write_points(points)
 
 
-# connect to database
-engine = create_engine('sqlite:///stats.db')
-Session = sessionmaker(bind=engine)
+def write_points(points):
+    """
+    Takes a list of points of the form:
+    {
+        "name": "(metric_name)",
+        "datapoints": [
+            [(timestamp_in_ms_since_epoch), (value)]
+        ],
+        "tags": {"username": "(username)"}
+    }
+
+    And sends it over to KairosDB.
+    """
+    response = requests.post(
+        KAIROSDB_SERVER + "/api/v1/datapoints", json.dumps(points))
+    if not 200 <= response.status_code < 300:
+        print("Something happened when writing points " + json.dumps(points) +
+                "\n" + response.text)
+        print(response.status_code)

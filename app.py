@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import re
 import argparse
 import datetime
-from influxdb import InfluxDBClient
+import database
 try:  # Python 3
     from urllib.request import urlopen
 except ImportError:  # Python 2
@@ -82,33 +82,7 @@ def parse_player(row):
 def update_database():
     data = get_ranks_table()
     players = [parse_player(row) for row in data]
-    client = InfluxDBClient()
-    client.switch_database('grid')
-    time = datetime.datetime.now()
-    points = [{'tags': {'username': player['name']},
-             'time': time,
-             'measurement': 'userlog',
-             'fields': {
-                 'squares': player['squares'],
-                 'units': player['units'],
-                 'farms': player['farms'],
-                 'cities': player['cities'],
-                 'bank': player['bank'],
-                 'clout': player['clout'],
-                 'gold': player['gold'],
-                 'silver': player['silver'],
-                 'rebels': player['rebels'],
-                 'wizards': player['wizards'],
-                 'energy': player['energy'],
-                 'perm': player['perm'],
-                 'wipes': player['wipes'],
-                 'kills': player['kills'],
-                 'slain': player['slain'],
-                 'loan': player['loan'],
-                 'trait': player['trait']
-                 }
-             } for player in players]
-    client.write_points(points)
+    database.write_player_data(players)
 
 
 def create_database():
