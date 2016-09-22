@@ -3,6 +3,7 @@ import json
 from influxdb import InfluxDBClient
 from dateutil import parser
 import datetime
+from time import sleep
 
 
 c = InfluxDBClient()
@@ -40,3 +41,4 @@ for day in range(1000, 0, -1):
                             print(queue)
                             print(response.text)
                         queue = []
+                        sleep(1)
