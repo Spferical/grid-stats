@@ -11,6 +11,16 @@ c.switch_database('grid')
 
 kairosdb_server = "http://localhost:8080"
 
+def send_points(points):
+    response = requests.post(
+        kairosdb_server + "/api/v1/datapoints",
+        json.dumps(points))
+    if response.text:
+        # possibly an error?
+        print(points)
+        print(response.text)
+
+
 now = datetime.datetime.now()
 for day in range(1000, 0, -1):
     time1 = (now - datetime.timedelta(days=day)).isoformat('T') + 'Z'
@@ -33,12 +43,8 @@ for day in range(1000, 0, -1):
                         'tags': {'username': x['username']},
                     })
                     if len(queue) > 100:
-                        response = requests.post(
-                            kairosdb_server + "/api/v1/datapoints",
-                            json.dumps(queue))
-                        if response.text:
-                            # possibly an error?
-                            print(queue)
-                            print(response.text)
+                        send_points(queue)
                         queue = []
                         sleep(1)
+    if (queue):
+        send_points(queue)
