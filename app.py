@@ -14,7 +14,7 @@ NUM_COLUMNS_IN_GRID_TABLE = 22
 
 def get_ranks_table():
     page = urlopen("http://codeelf.com/games/the-grid-2/grid/ranks/")
-    soup = BeautifulSoup(page)
+    soup = BeautifulSoup(page, "html.parser")
     data = []
     for row in soup.findAll("tr"):
         all_tds = row.findAll("td")
