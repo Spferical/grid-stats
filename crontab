@@ -1,0 +1,1 @@
+0 * * * * root python3 ./app.py update-database 2>&1 >> /var/log/cron.log
