@@ -78,10 +78,10 @@ def parse_player(row):
     return player
 
 
-def update_database():
+def update_database(kairosdb_url):
     data = get_ranks_table()
     players = [parse_player(row) for row in data]
-    database.write_player_data(players)
+    database.write_player_data(kairosdb_url, players)
 
 
 def main():
@@ -91,14 +91,10 @@ def main():
     subparsers.add_parser(
         "update-database",
         help="update the grid stats database")
-    subparsers.add_parser(
-        "create-database",
-        help="create the grid stats database")
+    parser.add_argument('--kairosdb_url', default="http://localhost:8080")
     args = vars(parser.parse_args())
     if args["command"] == "update-database":
-        update_database()
-    elif args["command"] == "create-database":
-        create_database()
+        update_database(args['kairosdb_url'])
 
 
 if __name__ == '__main__':

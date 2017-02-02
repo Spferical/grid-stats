@@ -3,13 +3,14 @@ import json
 import datetime
 
 
-KAIROSDB_SERVER = "http://localhost:8080"
-
-def write_player_data(players):
+def write_player_data(url, players):
     """ Writes a bunch of player data to the time-series database.
 
     players is a list of dicts with the key "name" for the player's
-    username and another key for each stat we are tracking."""
+    username and another key for each stat we are tracking.
+
+    url is the url for the kairosDB instance to write to.
+    """
     time = int(datetime.datetime.now().timestamp() * 1000)
     points = []
     for player in players:
@@ -22,10 +23,10 @@ def write_player_data(players):
                     ],
                     "tags": {"username": player["name"]},
                 })
-    write_points(points)
+    write_points(url, points)
 
 
-def write_points(points):
+def write_points(url, points):
     """
     Takes a list of points of the form:
     {
@@ -36,11 +37,11 @@ def write_points(points):
         "tags": {"username": "(username)"}
     }
 
-    And sends it over to KairosDB.
+    And sends it over to a KairosDB instance running at the given url.
     """
     response = requests.post(
-        KAIROSDB_SERVER + "/api/v1/datapoints", json.dumps(points))
+        url + "/api/v1/datapoints", json.dumps(points))
     if not 200 <= response.status_code < 300:
         print("Something happened when writing points " + json.dumps(points) +
-                "\n" + response.text)
+              "\n" + response.text)
         print(response.status_code)
