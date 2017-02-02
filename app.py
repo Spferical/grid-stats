@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 from bs4 import BeautifulSoup
 import re
 import argparse
