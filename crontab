@@ -1,1 +1,1 @@
-0 * * * * root python3 ./app.py update-database 2>&1 >> /var/log/cron.log
+0 * * * * root export (cat /root/.profile | xargs) && python3 ./app.py --kairosdb_url $KAIROSDB_URL update-database 2>&1 >> /var/log/cron.log

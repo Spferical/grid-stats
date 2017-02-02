@@ -8,4 +8,6 @@ RUN chmod 0644 /etc/cron.d/gridstats-cron
 
 RUN touch /var/log/cron.log
 
-CMD cron && /usr/bin/tail -F /var/log/cron.log
+ENV KAIROSDB_URL http://localhost:8080
+
+CMD env > /root/.profile && tail -f /var/log/cron.log & cron -f
