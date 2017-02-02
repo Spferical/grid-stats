@@ -1,13 +1,15 @@
-From python:2-onbuild
+From python:3-alpine
 
-RUN apt-get update && apt-get -y install cron
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
 
-ADD crontab /etc/cron.d/gridstats-cron
+COPY *.py *.sh requirements.txt /usr/src/app/
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN chmod 0644 /etc/cron.d/gridstats-cron
+COPY crontab /var/spool/cron/crontabs/root
 
 RUN touch /var/log/cron.log
 
 ENV KAIROSDB_URL http://localhost:8080
 
-CMD env > /root/.profile && tail -f /var/log/cron.log & cron -f
+CMD env > /root/.profile && tail -f /var/log/cron.log & crond -l 2 -f
