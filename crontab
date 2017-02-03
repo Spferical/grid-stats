@@ -1,3 +1,3 @@
 #!/bin/sh
 
-0 * * * export "$(cat /root/.profile | xargs)" && echo "$(date) Updating stats..." >> /var/log/cron.log && python3 /usr/src/app/app.py --kairosdb_url $KAIROSDB_URL update-database >> /var/log/cron.log 2>&1
+0 * * * * export "$(cat /root/.profile | xargs)" && echo "$(date) Updating stats..." >> /var/log/cron.log 2>&1 && python3 /usr/src/app/app.py --kairosdb_url $KAIROSDB_URL update-database >> /var/log/cron.log 2>&1
