@@ -1,2 +1,3 @@
 beautifulsoup4==4.5.3
-requests==2.13.0
+graphitesender==0.11.2
+pause==0.2

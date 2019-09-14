@@ -2,11 +2,10 @@
 from bs4 import BeautifulSoup
 import re
 import argparse
+from datetime import datetime, timedelta
+from urllib.request import urlopen
+import pause
 import database
-try:  # Python 3
-    from urllib.request import urlopen
-except ImportError:  # Python 2
-    from urllib import urlopen
 
 
 NUM_COLUMNS_IN_GRID_TABLE = 22
@@ -67,13 +66,10 @@ def parse_player(row):
         'energy': row[12],
         'perm': row[13],
         'wipes': row[14],
-        'wiped': row[15],
         'IPC': row[16],
         'kills': row[17],
         'slain': row[18],
         'loan': row[19],
-        'trait': row[20],
-        'activity': row[21],
     }
     return player
 
@@ -87,14 +83,17 @@ def update_database(kairosdb_url):
 def main():
     parser = argparse.ArgumentParser(
         description="Web application to graph stats of The Grid over time")
-    subparsers = parser.add_subparsers(dest="command")
-    subparsers.add_parser(
-        "update-database",
-        help="update the grid stats database")
-    parser.add_argument('--kairosdb_url', default="http://localhost:8080")
+    parser.add_argument('--graphite_url', default="localhost:2003")
     args = vars(parser.parse_args())
-    if args["command"] == "update-database":
-        update_database(args['kairosdb_url'])
+
+    while True:
+        # run every minute
+        dt = datetime.now() + timedelta(minutes=1)
+        dt = dt.replace(second=0, microsecond=0)
+        pause.until(dt)
+        print('[{}] reading stats...'.format(datetime.now()))
+        update_database(args['graphite_url'])
+        print('[{}] done'.format(datetime.now()))
 
 
 if __name__ == '__main__':
