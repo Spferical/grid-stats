@@ -87,9 +87,10 @@ def main():
     args = vars(parser.parse_args())
 
     while True:
-        # run every minute
-        dt = datetime.now() + timedelta(minutes=1)
-        dt = dt.replace(second=0, microsecond=0)
+        # run every hour
+        dt = datetime.now() + timedelta(hours=1)
+        dt = dt.replace(minute=0, second=0, microsecond=0)
+        print("waiting until {}".format(dt))
         pause.until(dt)
         print('[{}] reading stats...'.format(datetime.now()))
         update_database(args['graphite_url'])
