@@ -8,7 +8,7 @@ import pause
 import database
 
 
-NUM_COLUMNS_IN_GRID_TABLE = 22
+NUM_COLUMNS_IN_GRID_TABLE = 21
 
 
 def get_ranks_table():
@@ -66,10 +66,9 @@ def parse_player(row):
         'energy': row[12],
         'perm': row[13],
         'wipes': row[14],
-        'IPC': row[16],
-        'kills': row[17],
-        'slain': row[18],
-        'loan': row[19],
+        'kills': row[16],
+        'slain': row[17],
+        'loan': row[18],
     }
     return player
 
@@ -84,7 +83,16 @@ def main():
     parser = argparse.ArgumentParser(
         description="Web application to graph stats of The Grid over time")
     parser.add_argument('--graphite_url', default="localhost:2003")
+    parser.add_argument('--dry-run', action=argparse.BooleanOptionalAction)
     args = vars(parser.parse_args())
+
+    if args['dry_run']:
+        data = get_ranks_table()
+        players = [parse_player(row) for row in data]
+        for player in players:
+            print(player)
+        return
+
 
     while True:
         # run every hour
